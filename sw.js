@@ -1,7 +1,7 @@
 'use strict';
-const PREFIX='gentle-strength:'+self.registration.scope+':',VERSION=PREFIX+'1.1.0';
+const PREFIX='gentle-strength:'+self.registration.scope+':',VERSION=PREFIX+'1.2.0';
 const ASSETS=['./','./index.html','./style.css','./data.js','./app.js','./manifest.webmanifest','./assets/icon.png','./printable/training.png','./printable/training.pdf'];
-['curl','external','lateral_front','knee','slide','heel','toe','wrist'].forEach(id=>['.gif','.png','.end.png','.sheet.png'].forEach(ext=>ASSETS.push('./assets/animations/'+id+ext)));
+['curl','external','lateral_front','knee','slide','heel','toe','wrist'].forEach(id=>['.gif','.png','.end.png','.sheet.png','.player.png'].forEach(ext=>ASSETS.push('./assets/animations/'+id+ext)));
 self.addEventListener('install',e=>e.waitUntil(caches.open(VERSION).then(c=>c.addAll(ASSETS.map(url=>new Request(url,{cache:'reload'})))).catch(async err=>{await caches.delete(VERSION);throw err;})));
 // Explicit activation from idle UI only; otherwise normal lifecycle.
 self.addEventListener('message',e=>{if(e.data&&e.data.type==='SKIP_WAITING')e.waitUntil(self.clients.matchAll({type:'window',includeUncontrolled:true}).then(all=>{const scoped=all.filter(c=>c.url.startsWith(self.registration.scope));if(scoped.length>1){if(e.source)e.source.postMessage({type:'UPDATE_BLOCKED'});return;}return self.skipWaiting();}));});

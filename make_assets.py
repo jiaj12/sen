@@ -70,12 +70,12 @@ F='/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc';FB='/usr/share/fonts/
 def font(n,b=False):return ImageFont.truetype(FB if b else F,n,index=2)
 im=Image.new('RGB',(1600,2264),'white');d=ImageDraw.Draw(im)
 def txt(x,y,s,n=34,b=False,c=I):d.text((x,y),s,font=font(n,b),fill=c)
-txt(65,42,'每日20分钟 · 四肢轻量训练',64,True);txt(69,126,'恢复期参考｜经妇科或盆底康复专业评估允许后练习',34,False,'#356b60');txt(69,180,'热身3分钟 · 动作及休息14分钟 · 放松3分钟',36,True);txt(69,232,'周一 / 三 / 五 A/B交替；其他日舒缓活动或休息。',31)
+txt(65,42,'每日20分钟 · 四肢轻量训练',64,True);txt(69,126,'居家轻量运动参考｜有健康限制请先咨询专业人员',34,False,'#356b60');txt(69,180,'热身3分钟 · 动作及休息14分钟 · 放松3分钟',36,True);txt(69,232,'周一 / 三 / 五 A/B交替；其他日舒缓活动或休息。',31)
 for i,(key,name,note) in enumerate(DATA):
  x=60+i%2*750;y=300+i//2*375;d.rounded_rectangle((x,y,x+730,y+355),radius=20,fill='#f6f9f6',outline='#c8d9ce',width=3);txt(x+20,y+12,f'{i+1:02d}  {name}',40,True);txt(x+20,y+65,note,28)
  for j,suffix in enumerate(['','.end']):
   pic=Image.open(A/f'{key}{suffix}.png').resize((315,210));im.paste(pic,(x+15+j*385,y+110));txt(x+103+j*385,y+318,'起始' if j==0 else '呼气用力',25,False,'#356b60')
  d.line((x+333,y+216,x+390,y+216),fill='#669d62',width=6);d.polygon([(x+390,y+216),(x+371,y+203),(x+371,y+229)],fill='#669d62')
-txt(68,1820,'先1组、每动作8次；用力2秒，还原3秒。',36,True);txt(68,1874,'轻水瓶250–500克起步；1kg仅经专业允许且适应后用于部分动作。',30);txt(68,1924,'背靠椅背，不憋气、不向下使劲；膝痛时减小幅度。',30)
-d.rounded_rectangle((60,1990,1540,2200),radius=20,fill='#fff2ed',outline='#dfb0a3',width=3);txt(84,2007,'不适即停，不强求完成',42,True,'#8c4334');txt(84,2070,'坠胀、突出感、漏尿或膝痛加重：停止；持续或明显加重请就医。',32,False,'#743f35');txt(84,2125,'出血、剧烈疼痛或无法排尿：及时就医。示意图非个体医疗处方。',30,False,'#743f35')
+txt(68,1820,'先1组、每动作8次；用力2秒，还原3秒。',36,True);txt(68,1874,'轻水瓶250–500克起步；1kg仅经专业允许且适应后用于部分动作。',30);txt(68,1924,'背靠椅背，不憋气、不向下使劲；关节不适时减小幅度。',30)
+d.rounded_rectangle((60,1990,1540,2200),radius=20,fill='#fff2ed',outline='#dfb0a3',width=3);txt(84,2007,'不适即停，不强求完成',42,True,'#8c4334');txt(84,2070,'疼痛或其他不适加重：停止；持续或明显加重请就医。',32,False,'#743f35');txt(84,2125,'严重症状及时就医。示意图仅供一般参考，非个体医疗处方。',30,False,'#743f35')
 im.save(P/'printable/training.png');im.save(P/'printable/training.pdf',resolution=193.5)
