@@ -1,10 +1,12 @@
 'use strict';
-const PREFIX='gentle-strength:'+self.registration.scope+':',VERSION=PREFIX+'1.2.0';
+const PREFIX='gentle-strength:'+self.registration.scope+':',VERSION=PREFIX+'1.3.0';
 const ASSETS=['./','./index.html','./style.css','./data.js','./app.js','./manifest.webmanifest','./assets/icon.png','./printable/training.png','./printable/training.pdf'];
-['curl','external','lateral_front','knee','slide','heel','toe','wrist'].forEach(id=>['.gif','.png','.end.png','.sheet.png','.player.png'].forEach(ext=>ASSETS.push('./assets/animations/'+id+ext)));
+['curl','external','lateral_front','knee','slide','heel','toe','wrist','row','standcurl','standheel'].forEach(id=>['.gif','.png','.end.png','.sheet.png','.player.png'].forEach(ext=>ASSETS.push('./assets/animations/'+id+ext)));
 self.addEventListener('install',e=>e.waitUntil(caches.open(VERSION).then(c=>c.addAll(ASSETS.map(url=>new Request(url,{cache:'reload'})))).catch(async err=>{await caches.delete(VERSION);throw err;})));
 // Explicit activation from idle UI only; otherwise normal lifecycle.
 self.addEventListener('message',e=>{if(e.data&&e.data.type==='SKIP_WAITING')e.waitUntil(self.clients.matchAll({type:'window',includeUncontrolled:true}).then(all=>{const scoped=all.filter(c=>c.url.startsWith(self.registration.scope));if(scoped.length>1){if(e.source)e.source.postMessage({type:'UPDATE_BLOCKED'});return;}return self.skipWaiting();}));});
 self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k.startsWith(PREFIX)&&k!==VERSION).map(k=>caches.delete(k)))).then(()=>self.clients.claim())));
 // Remove only prior caches belonging to this app's exact scope; never remove unrelated Pages caches.
 self.addEventListener('fetch',e=>{if(e.request.method!=='GET')return;const u=new URL(e.request.url),scope=new URL(self.registration.scope);if(u.origin!==scope.origin||!u.pathname.startsWith(scope.pathname))return;e.respondWith(caches.open(VERSION).then(async c=>{const hit=await c.match(e.request);if(hit)return hit;if(e.request.mode==='navigate'&&(u.pathname===scope.pathname||u.pathname===scope.pathname+'index.html')){const index=await c.match('./index.html');if(index)return index;}return fetch(e.request);}));});
+// Only reset this registration and its versioned program caches; never localStorage.
+self.addEventListener('message',e=>{if(!e.data||e.data.type!=='RESET_CACHE')return;e.waitUntil((async()=>{try{const all=await self.clients.matchAll({type:'window',includeUncontrolled:true});const scoped=all.filter(c=>c.url.startsWith(self.registration.scope));if(scoped.length>1){if(e.source)e.source.postMessage({type:'UPDATE_BLOCKED'});return;}await self.registration.unregister();const keys=await caches.keys();await Promise.all(keys.filter(k=>k.startsWith(PREFIX)).map(k=>caches.delete(k)));if(e.source)e.source.postMessage({type:'RESET_DONE'});}catch(err){if(e.source)e.source.postMessage({type:'RESET_FAILED'});}})());});

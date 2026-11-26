@@ -40,6 +40,25 @@ def art(kind,t):
    if kind=='external':
     if z==-1:lh=ha
     else:line(lh,ha,'#d5a943',5);hand(lh);hand(ha)
+ elif kind=='row':
+  rect(142,103,12,116,C);rect(146,215,125,14,C);rect(152,229,8,67,C);rect(260,229,8,67,C)
+  head(182,52,True);path('M171 82 L193 82 Q212 91 215 113 L209 137 L207 202 Q184 214 155 200 L157 115 Q157 94 171 82 Z',T)
+  chain((182,207),(250,220),(250,288),17,13,9,'#777f80');shoe((250,288));chain((186,207),(266,220),(266,287),18,14,9,L);shoe((266,287))
+  rect(388,82,12,218,'#c9cfcc',2);ell(386,158,5,7,C)
+  sh=(191,118);el=(231-47*t,142+23*t);ha=(273-51*t,157+8*t)
+  line(ha,(386,158),'#d5a943',4);chain(sh,el,ha,10,8,5.5,S);hand(ha)
+ elif kind in ('standcurl','standheel'):
+  # Stable counter, side view; the upper body stays upright.
+  rect(285,146,94,12,C,3);rect(363,158,11,140,C,2);rect(280,158,9,140,C,2)
+  lift=9*t if kind=='standheel' else 0
+  head(198,38-lift,True);path(f'M187 {68-lift} L209 {68-lift} Q228 {77-lift} 230 {99-lift} L224 {125-lift} L221 {169-lift} Q199 {182-lift} 176 {169-lift} L176 {101-lift} Q176 {81-lift} 187 {68-lift} Z',T)
+  hip=(198,171-lift);k=(202,229-lift);ank=(203,287-lift)
+  if kind=='standcurl':
+   ang=math.radians(90+48*t);a=(k[0]+58*math.cos(ang),k[1]+58*math.sin(ang));rot=35*t
+  else:a=ank;rot=18*t
+  chain((190,171-lift),(190,229-lift),(191,287-lift),16,12,8,'#777f80');shoe((191,287-lift),18*t if kind=='standheel' else 0)
+  chain(hip,k,a,17,13,9,L);shoe(a,rot)
+  chain((211,103-lift),(246,144),(284,145),10,8,5.5,S);hand((284,145))
  elif kind=='slide':
   rect(54,239,372,17,C,5);rect(66,256,9,43,C);rect(405,256,9,43,C);rect(65,217,69,22,'#e3eae2',7)
   q.append('<g transform="translate(108 213) rotate(-90)">');head(0,0,True);q.append('</g>');path('M132 197 Q157 189 186 197 L233 200 L243 234 L137 236 Q128 226 132 197 Z',T)
@@ -58,7 +77,8 @@ def art(kind,t):
    rect(208,165,98,11,C);rect(292,176,8,120,C);el=(208,155);wr=(289,156);chain((188,118),el,wr,10,8,5.5,S);ang=math.radians(18-43*t);ha=(wr[0]+19*math.cos(ang),wr[1]+19*math.sin(ang));seg(wr,ha,5.5,5,S);dumb(ha)
   else:chain((188,118),(195,164),(234,202),10,8,5.5,S);hand((234,202))
  q.append('</svg>');return Image.open(io.BytesIO(cairosvg.svg2png(bytestring=''.join(q).encode(),output_width=W*2,output_height=H*2))).convert('RGB').resize((W,H),Image.Resampling.LANCZOS)
-DATA=[('curl','手臂弯举','轻水瓶；肘贴身'),('external','肩外旋','空手或轻弹力带'),('lateral_front','低位侧抬','空手优先；不高于肩'),('knee','单腿伸膝','左右各8次；不痛范围'),('slide','仰卧脚跟滑动','左右各8次；脚跟贴床'),('heel','坐姿提踵','前脚掌贴地'),('toe','坐姿抬脚尖','脚跟贴地'),('wrist','支撑式腕屈伸','前臂放桌面；轻水瓶')]
+DATA=[('curl','手臂弯举','轻水瓶；肘贴身'),('external','肩外旋','空手或轻弹力带'),('lateral_front','低位侧抬','空手优先；不高于肩'),('knee','单腿伸膝','左右分别；不痛范围'),('heel','坐姿提踵','前脚掌贴地'),('toe','坐姿抬脚尖','脚跟贴地'),('wrist','支撑式腕屈伸','前臂放桌面；轻水瓶'),('row','坐姿划船（可选）','轻弹力带；固定点可靠'),('standcurl','扶持屈膝（可选）','扶稳台面；不负重'),('standheel','扶持提踵（可选）','扶稳台面；不负重')]
+# Keep legacy bed illustrations for compatibility with older copies.
 for key,_,_ in DATA:
  frames=[]
  for i in range(25):
@@ -70,12 +90,12 @@ F='/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc';FB='/usr/share/fonts/
 def font(n,b=False):return ImageFont.truetype(FB if b else F,n,index=2)
 im=Image.new('RGB',(1600,2264),'white');d=ImageDraw.Draw(im)
 def txt(x,y,s,n=34,b=False,c=I):d.text((x,y),s,font=font(n,b),fill=c)
-txt(65,42,'每日20分钟 · 四肢轻量训练',64,True);txt(69,126,'居家轻量运动参考｜有健康限制请先咨询专业人员',34,False,'#356b60');txt(69,180,'热身3分钟 · 动作及休息14分钟 · 放松3分钟',36,True);txt(69,232,'周一 / 三 / 五 A/B交替；其他日舒缓活动或休息。',31)
+txt(65,42,'每日轻量力量训练',64,True);txt(69,126,'居家轻量运动参考｜有健康限制请先咨询专业人员',34,False,'#356b60');txt(69,180,'热身3分钟 · 动作与休息 · 放松3分钟',36,True);txt(69,232,'周一 / 三 / 五 A/B交替；其他日舒缓活动或休息。',31)
 for i,(key,name,note) in enumerate(DATA):
- x=60+i%2*750;y=300+i//2*375;d.rounded_rectangle((x,y,x+730,y+355),radius=20,fill='#f6f9f6',outline='#c8d9ce',width=3);txt(x+20,y+12,f'{i+1:02d}  {name}',40,True);txt(x+20,y+65,note,28)
+ x=60+i%2*750;y=285+i//2*290;d.rounded_rectangle((x,y,x+730,y+278),radius=20,fill='#f6f9f6',outline='#c8d9ce',width=3);txt(x+20,y+12,f'{i+1 if i<4 else i+2:02d}  {name}',40,True);txt(x+20,y+65,note,28)
  for j,suffix in enumerate(['','.end']):
-  pic=Image.open(A/f'{key}{suffix}.png').resize((315,210));im.paste(pic,(x+15+j*385,y+110));txt(x+103+j*385,y+318,'起始' if j==0 else '呼气用力',25,False,'#356b60')
- d.line((x+333,y+216,x+390,y+216),fill='#669d62',width=6);d.polygon([(x+390,y+216),(x+371,y+203),(x+371,y+229)],fill='#669d62')
-txt(68,1820,'先1组、每动作8次；用力2秒，还原3秒。',36,True);txt(68,1874,'轻水瓶250–500克起步；1kg仅经专业允许且适应后用于部分动作。',30);txt(68,1924,'背靠椅背，不憋气、不向下使劲；关节不适时减小幅度。',30)
+  pic=Image.open(A/f'{key}{suffix}.png');box={'curl':(115,8,365,308),'external':(115,8,365,308),'lateral_front':(115,8,365,308),'knee':(119,8,369,308),'heel':(95,8,345,308),'toe':(95,8,345,308),'wrist':(110,8,360,308),'row':(133,8,405,308),'standcurl':(125,0,385,310),'standheel':(125,0,385,310)}[key];pic=pic.crop(box);pic.thumbnail((295,145));im.paste(pic,(x+170+j*365-pic.width//2,y+102));txt(x+120+j*365,y+249,'起始' if j==0 else '呼气用力',25,False,'#356b60')
+ d.line((x+333,y+179,x+390,y+179),fill='#669d62',width=6);d.polygon([(x+390,y+179),(x+371,y+166),(x+371,y+192)],fill='#669d62')
+txt(68,1820,'先1组、次数以网页为准；用力2秒，还原3秒。',36,True);txt(68,1874,'轻水瓶250–500克起步；1kg仅经专业允许且适应后用于部分动作。',30);txt(68,1924,'可选动作须经专业评估允许；不憋气、不向下使劲。',30)
 d.rounded_rectangle((60,1990,1540,2200),radius=20,fill='#fff2ed',outline='#dfb0a3',width=3);txt(84,2007,'不适即停，不强求完成',42,True,'#8c4334');txt(84,2070,'疼痛或其他不适加重：停止；持续或明显加重请就医。',32,False,'#743f35');txt(84,2125,'严重症状及时就医。示意图仅供一般参考，非个体医疗处方。',30,False,'#743f35')
 im.save(P/'printable/training.png');im.save(P/'printable/training.pdf',resolution=193.5)

@@ -5,7 +5,7 @@ All 25 frames use an identical crop, so frame coordinates remain stable.
 from pathlib import Path
 from PIL import Image
 base=Path(__file__).parent/'assets'/'animations'
-boxes={'curl':(115,8,365,308),'external':(115,8,365,308),'lateral_front':(115,8,365,308),'knee':(119,8,369,308),'heel':(95,8,345,308),'toe':(95,8,345,308),'wrist':(110,8,360,308),'slide':(40,130,440,310)}
+boxes={'curl':(115,8,365,308),'external':(115,8,365,308),'lateral_front':(115,8,365,308),'knee':(119,8,369,308),'heel':(95,8,345,308),'toe':(95,8,345,308),'wrist':(110,8,360,308),'slide':(40,130,440,310),'row':(133,8,405,308),'standcurl':(125,0,385,310),'standheel':(125,0,385,310)}
 for name,box in boxes.items():
     sheet=Image.open(base/(name+'.sheet.png')).convert('RGB')
     assert sheet.size==(2400,1600), (name,sheet.size)
