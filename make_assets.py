@@ -1,88 +1,81 @@
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image,ImageDraw,ImageFont
 from pathlib import Path
-import math
-P=Path(__file__).resolve().parent
-F='/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc'; FB='/usr/share/fonts/opentype/noto/NotoSansCJK-Bold.ttc'
-def font(n,b=False): return ImageFont.truetype(FB if b else F,n,index=2)
-BG='#f3f7f5'; INK='#263b40'; SK='#dfac90'; TOP='#508b80'; PANTS='#55697c'; CH='#a9b9b4'; SHO='#34474d'; WEIGHT='#6d8794'
-def art(kind,t=0):
- im=Image.new('RGB',(480,300),BG); d=ImageDraw.Draw(im)
- def line(p,c,w):
-  d.line(p,fill=c,width=w,joint='curve'); r=w/2
-  for x,y in [p[0],p[-1]]: d.ellipse((x-r,y-r,x+r,y+r),fill=c)
- def limb(p,c,w=17): line(p,INK,w+4);line(p,c,w)
- def head(x,y):
-  d.ellipse((x-24,y-28,x+24,y+25),fill=SK,outline=INK,width=2);d.pieslice((x-26,y-32,x+25,y+22),175,365,fill='#a4a7a4');d.ellipse((x+10,y-3,x+13,y),fill=INK)
- def bottle(x,y): d.rounded_rectangle((x-8,y-18,x+8,y+18),radius=5,fill='#b8dce3',outline=INK,width=2);d.rectangle((x-5,y-22,x+5,y-17),fill=WEIGHT)
- def shoe(a,b): limb([a,b],SHO,13)
- def ground(): d.line((54,266,426,266),fill='#c3ceca',width=2)
- ground()
- if kind in ('curl','lateral','knee','heel','toe','wrist'):
-  # side view: seated upright with backrest, feet pointing right
-  d.rounded_rectangle((135,88,151,196),radius=5,fill=CH,outline=INK,width=2);d.rounded_rectangle((141,190,273,207),radius=5,fill=CH,outline=INK,width=2)
-  line([(151,205),(151,263)],CH,10);line([(262,205),(262,263)],CH,10)
-  head(185,61);limb([(185,88),(181,173)],TOP,44)
-  # far leg remains supported
-  limb([(186,180),(250,193),(250,251)],'#718294',20);shoe((250,253),(279,254))
-  hip=(190,183); knee=(267,194)
-  if kind=='knee':
-   angle=math.radians(90-70*t); ankle=(knee[0]+65*math.cos(angle),knee[1]+65*math.sin(angle));foot=(ankle[0]+28,ankle[1]+3)
-  elif kind=='heel': ankle=(267-8*t,251-22*t);foot=(296,255)
-  elif kind=='toe': ankle=(267,251);foot=(296,255-23*t)
-  else: ankle=(267,251);foot=(296,255)
-  limb([hip,knee,ankle],PANTS,23);shoe(ankle,foot)
-  shoulder=(184,106);elbow=(196,155)
-  if kind=='curl':
-   a=math.radians(70-150*t); hand=(elbow[0]+51*math.cos(a),elbow[1]+51*math.sin(a));limb([shoulder,elbow,hand],SK,15);bottle(*hand)
-  elif kind=='wrist':
-   d.rounded_rectangle((212,164,353,174),radius=4,fill=CH,outline=INK,width=2);line([(343,174),(343,263)],CH,9);elbow=(210,156);wr=(272,156);a=math.radians(18-38*t);hand=(wr[0]+24*math.cos(a),wr[1]+24*math.sin(a));limb([shoulder,elbow,wr,hand],SK,14);bottle(*hand)
-  else: limb([shoulder,(197,154),(238,180)],SK,15)
- elif kind in ('external','lateral_front'):
-  d.rounded_rectangle((170,88,310,205),radius=12,fill=CH,outline=INK,width=2);d.rounded_rectangle((158,190,322,208),radius=6,fill=CH,outline=INK,width=2)
-  line([(171,207),(171,263)],CH,10);line([(309,207),(309,263)],CH,10)
-  head(240,60);d.rounded_rectangle((199,91,281,188),radius=24,fill=TOP,outline=INK,width=2)
-  for s in [-1,1]:
-   h=(240+s*25,183);k=(240+s*40,207);a=(240+s*40,251);limb([h,k,a],PANTS,25);shoe(a,(a[0]+s*10,257))
-  hands=[]
-  for s in [-1,1]:
-   sh=(240+s*42,108)
-   if kind=='external': el=(240+s*47,153);hand=(240+s*(14+72*t),151-4*t)
-   else: el=(sh[0]+s*(10+37*t),sh[1]+43-17*t);hand=(el[0]+s*(4+40*t),el[1]+39-22*t)
-   limb([sh,el,hand],SK,15);hands.append(hand)
-   if kind=='lateral_front':bottle(*hand)
-  if kind=='external':line(hands,'#d4a541',5)
+import math,io,cairosvg
+P=Path(__file__).resolve().parent; A=P/'assets/animations'; W,H=480,320
+I='#303936'; S='#f4d8b8'; T='#aecb91'; L='#596061'; C='#a6adaa'; B='#48a7c8'
+def art(kind,t):
+ q=['<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 320"><rect width="480" height="320" fill="white"/>']
+ def path(d,c):q.append(f'<path d="{d}" fill="{c}" stroke="{I}" stroke-width="1.7" stroke-linejoin="round"/>')
+ def rect(x,y,w,h,c,r=4):q.append(f'<rect x="{x}" y="{y}" width="{w}" height="{h}" rx="{r}" fill="{c}" stroke="{I}" stroke-width="1.7"/>')
+ def ell(x,y,rx,ry,c):q.append(f'<ellipse cx="{x}" cy="{y}" rx="{rx}" ry="{ry}" fill="{c}" stroke="{I}" stroke-width="1.5"/>')
+ def line(a,b,c,w=2):q.append(f'<path d="M{a[0]} {a[1]} L{b[0]} {b[1]}" stroke="{c}" stroke-width="{w}" stroke-linecap="round"/>')
+ def seg(a,b,r1,r2,c):
+  dx,dy=b[0]-a[0],b[1]-a[1];n=math.hypot(dx,dy) or 1; x,y=-dy/n,dx/n
+  def p(a,r):return f'{a[0]+x*r} {a[1]+y*r}'
+  path(f'M{p(a,r1)} L{p(b,r2)} Q{b[0]+dx/n*r2} {b[1]+dy/n*r2} {p(b,-r2)} L{p(a,-r1)} Q{a[0]-dx/n*r1} {a[1]-dy/n*r1} {p(a,r1)} Z',c)
+ def chain(a,b,c,r1,r2,r3,col):seg(a,b,r1,r2,col);seg(b,c,r2,r3,col)
+ def hand(a):ell(*a,7,9,S);line((a[0]-3,a[1]+3),(a[0]+3,a[1]+3),'#b38f76',1)
+ def dumb(a):
+  x,y=a;rect(x-17,y-3,34,6,'#717d7c',2);rect(x-20,y-8,9,16,B,3);rect(x+11,y-8,9,16,B,3);hand(a)
+ def shoe(a,ang=0,front=False):
+  q.append(f'<g transform="translate({a[0]} {a[1]}) rotate({ang})">')
+  path('M-11 -9 Q-14 5 -10 10 L10 10 Q15 5 9 -9 Z' if front else 'M-10 -9 L8 -9 Q13 -2 24 0 Q32 1 33 7 L30 10 L-11 10 Q-14 5 -10 -9 Z','#fff');line((-9,5),(10 if front else 29,5),'#b4bdb8',1);q.append('</g>')
+ def head(x,y,side=False):
+  rect(x-8,y+20,16,20,S,5)
+  if side:path(f'M{x-19} {y-5} Q{x-20} {y-30} {x} {y-30} Q{x+20} {y-29} {x+21} {y-5} L{x+25} {y+5} L{x+20} {y+9} Q{x+20} {y+23} {x+6} {y+26} Q{x-18} {y+23} {x-19} {y-5} Z',S)
+  else:ell(x-19,y,4,7,S);ell(x+19,y,4,7,S);ell(x,y-2,19,28,S)
+ line((65,300),(415,300),'#e1e7e2')
+ if kind in ('curl','external','lateral_front'):
+  rect(177,112,126,115,C,8);rect(174,217,132,13,C);rect(178,229,8,67,C);rect(294,229,8,67,C)
+  for z in [-1,1]:
+   x=240+z*30;path(f'M{x-22} 191 Q{x-25} 210 {x-19} 228 L{x-14} 284 Q{x} 290 {x+13} 284 L{x+19} 228 Q{x+24} 210 {x+19} 191 Z',L);shoe((x,287),front=True)
+  head(240,52);path('M224 82 Q240 93 256 82 L276 90 Q287 97 291 118 L272 126 L273 191 Q240 200 207 191 L208 126 L189 118 Q193 97 204 90 Z',T)
+  for z in [-1,1]:
+   sh=(240+z*43,118);el=(240+z*49,166)
+   if kind=='curl':ha=(el[0]+z*(5+9*math.sin(math.pi*t)),el[1]+44*math.cos(math.pi*t))
+   elif kind=='external':ha=(240+z*(23+58*t),159-2*t)
+   else:
+    a=math.radians(82-47*t);el=(sh[0]+z*math.cos(a)*43,sh[1]+math.sin(a)*43);ha=(el[0]+z*math.cos(a+.12)*38,el[1]+math.sin(a+.12)*38)
+   chain(sh,el,ha,10,8,5.5,S);dumb(ha) if kind=='curl' else hand(ha)
+   if kind=='external':
+    if z==-1:lh=ha
+    else:line(lh,ha,'#d5a943',5);hand(lh);hand(ha)
  elif kind=='slide':
-  d.rounded_rectangle((65,205,420,225),radius=6,fill=CH,outline=INK,width=2);line([(75,225),(75,265)],CH,10);line([(410,225),(410,265)],CH,10)
-  d.rounded_rectangle((75,180,143,205),radius=9,fill='#dce5e1');head(121,176);limb([(153,187),(239,189)],TOP,37);limb([(162,180),(206,193),(237,195)],SK,14)
-  limb([(237,193),(312,194),(383,194)],'#718294',18);shoe((383,194),(398,187))
-  # heel stays on bed, knee rises with flexion
-  a=(382-82*t,195);k=(310-40*t,193-58*t);limb([(235,191),k,a],PANTS,22);shoe(a,(a[0]+15,a[1]-8))
- return im
+  rect(54,239,372,17,C,5);rect(66,256,9,43,C);rect(405,256,9,43,C);rect(65,217,69,22,'#e3eae2',7)
+  q.append('<g transform="translate(108 213) rotate(-90)">');head(0,0,True);q.append('</g>');path('M132 197 Q157 189 186 197 L233 200 L243 234 L137 236 Q128 226 132 197 Z',T)
+  chain((236,219),(313,225),(389,225),17,13,8,'#777f80');shoe((391,226),-75)
+  hip=(235,219);a=(389-87*t,229);dx=a[0]-hip[0];dy=a[1]-hip[1];dist=math.hypot(dx,dy);h=math.sqrt(max(0,78**2-(dist/2)**2));k=((hip[0]+a[0])/2+dy/dist*h,(hip[1]+a[1])/2-dx/dist*h)
+  chain(hip,k,a,18,14,9,L);shoe(a,-75+45*t);chain((153,211),(195,222),(233,223),9,7,5,S);hand((233,223))
+ else:
+  rect(142,103,12,116,C);rect(146,215,125,14,C);rect(152,229,8,67,C);rect(260,229,8,67,C)
+  head(182,52,True);path('M171 82 L193 82 Q212 91 215 113 L209 137 L207 202 Q184 214 155 200 L157 115 Q157 94 171 82 Z',T)
+  chain((182,207),(250,220),(250,288),17,13,9,'#777f80');shoe((250,288));hip=(186,207);k=(266,220);a=(266,287);rot=0
+  if kind=='knee':ang=math.radians(90-66*t);a=(k[0]+67*math.cos(ang),k[1]+67*math.sin(ang));rot=-45*t
+  if kind=='heel':rot=24*t;theta=math.radians(rot);a=(297-31*math.cos(theta),287-31*math.sin(theta));k=(266,220-4*t)
+  if kind=='toe':rot=-22*t
+  chain(hip,k,a,18,14,9,L);shoe(a,rot)
+  if kind=='wrist':
+   rect(208,165,98,11,C);rect(292,176,8,120,C);el=(208,155);wr=(289,156);chain((188,118),el,wr,10,8,5.5,S);ang=math.radians(18-43*t);ha=(wr[0]+19*math.cos(ang),wr[1]+19*math.sin(ang));seg(wr,ha,5.5,5,S);dumb(ha)
+  else:chain((188,118),(195,164),(234,202),10,8,5.5,S);hand((234,202))
+ q.append('</svg>');return Image.open(io.BytesIO(cairosvg.svg2png(bytestring=''.join(q).encode(),output_width=W*2,output_height=H*2))).convert('RGB').resize((W,H),Image.Resampling.LANCZOS)
 DATA=[('curl','手臂弯举','轻水瓶；肘贴身'),('external','肩外旋','空手或轻弹力带'),('lateral_front','低位侧抬','空手优先；不高于肩'),('knee','单腿伸膝','左右各8次；不痛范围'),('slide','仰卧脚跟滑动','左右各8次；脚跟贴床'),('heel','坐姿提踵','前脚掌贴地'),('toe','坐姿抬脚尖','脚跟贴地'),('wrist','支撑式腕屈伸','前臂放桌面；轻水瓶')]
-for key,name,note in DATA:
+for key,_,_ in DATA:
  frames=[]
  for i in range(25):
-  p=i/25*5;t=(p/2 if p<2 else (5-p)/3); t=(1-math.cos(math.pi*t))/2
-  im=art(key,t);d=ImageDraw.Draw(im);d.text((16,10),'呼气 · 慢慢用力' if p<2 else '吸气 · 缓慢还原',font=font(19,True),fill='#285b50');frames.append(im)
- frames[0].save(P/'assets/animations'/f'{key}.gif',save_all=True,append_images=frames[1:],duration=200,loop=0,optimize=True)
- art(key,0).save(P/'assets/animations'/f'{key}.png')
-# A4 poster with two poses per cell
-im=Image.new('RGB',(1600,2264),'#ffffff');d=ImageDraw.Draw(im)
-def txt(x,y,s,n=34,b=False,c=INK):d.text((x,y),s,font=font(n,b),fill=c)
-txt(70,48,'每日20分钟 · 四肢轻量训练',66,True);txt(73,132,'恢复期参考  |  经妇科或盆底康复专业评估允许后练习',35,False,'#356b60')
-txt(73,196,'热身3分钟  ·  动作与休息约14分钟  ·  放松3分钟',37,True)
-txt(73,252,'周一 / 三 / 五抗阻（A/B交替）；其余日轻活动，身体不适可休息。',30)
+  p=i/5;t=p/2 if p<2 else (5-p)/3;frames.append(art(key,(1-math.cos(math.pi*t))/2))
+ sheet=Image.new('RGB',(W*5,H*5),'white')
+ for i,f in enumerate(frames):sheet.paste(f,(i%5*W,i//5*H))
+ sheet.save(A/f'{key}.sheet.png',optimize=True);frames[0].save(A/f'{key}.gif',save_all=True,append_images=frames[1:],duration=200,loop=0,optimize=True);frames[0].save(A/f'{key}.png');frames[10].save(A/f'{key}.end.png')
+F='/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc';FB='/usr/share/fonts/opentype/noto/NotoSansCJK-Bold.ttc'
+def font(n,b=False):return ImageFont.truetype(FB if b else F,n,index=2)
+im=Image.new('RGB',(1600,2264),'white');d=ImageDraw.Draw(im)
+def txt(x,y,s,n=34,b=False,c=I):d.text((x,y),s,font=font(n,b),fill=c)
+txt(65,42,'每日20分钟 · 四肢轻量训练',64,True);txt(69,126,'恢复期参考｜经妇科或盆底康复专业评估允许后练习',34,False,'#356b60');txt(69,180,'热身3分钟 · 动作及休息14分钟 · 放松3分钟',36,True);txt(69,232,'周一 / 三 / 五 A/B交替；其他日舒缓活动或休息。',31)
 for i,(key,name,note) in enumerate(DATA):
- x=65+(i%2)*745;y=325+(i//2)*373
- d.rounded_rectangle((x,y,x+720,y+350),radius=22,fill=BG,outline='#d3e1db',width=3)
- txt(x+21,y+12,f'{i+1:02d}  {name}',41,True);txt(x+22,y+65,note,28)
- for j,t in enumerate([0,1]):
-  pic=art(key,t).resize((310,194));im.paste(pic,(x+20+j*365,y+108));txt(x+100+j*365,y+298,'起始' if j==0 else '用力时呼气',27,False,'#356b60')
- d.line((x+333,y+205,x+380,y+205),fill='#356b60',width=5);d.polygon([(x+380,y+205),(x+365,y+195),(x+365,y+215)],fill='#356b60')
-txt(73,1835,'每个动作先做1组、约8次；用力2秒，放回3秒。',36,True)
-txt(73,1890,'轻水瓶250–500克起步；1公斤仅在专业允许且适应后用于部分动作。',30)
-txt(73,1938,'背靠椅背，不憋气、不向下使劲；不做卷腹、重负荷深蹲或跳跃。',30)
-d.rounded_rectangle((65,2000,1535,2207),radius=20,fill='#fff2ed',outline='#dfb0a3',width=3)
-txt(88,2020,'不适即停，不强求完成',42,True,'#8c4334');txt(88,2080,'坠胀、突出感、漏尿或膝痛加重：停止训练；持续或明显加重请就医。',32,False,'#743f35');txt(88,2134,'出血、剧烈疼痛或无法排尿：及时就医。示意图不是个体医疗处方。',30,False,'#743f35')
-im.save(P/'printable'/'training.png');im.save(P/'printable'/'training.pdf',resolution=193.5)
-icon=Image.new('RGB',(192,192),'#356b60');di=ImageDraw.Draw(icon);di.rounded_rectangle((35,80,157,112),radius=13,fill='white');di.rounded_rectangle((28,56,56,136),radius=9,fill='white');di.rounded_rectangle((136,56,164,136),radius=9,fill='white');icon.save(P/'assets'/'icon.png')
+ x=60+i%2*750;y=300+i//2*375;d.rounded_rectangle((x,y,x+730,y+355),radius=20,fill='#f6f9f6',outline='#c8d9ce',width=3);txt(x+20,y+12,f'{i+1:02d}  {name}',40,True);txt(x+20,y+65,note,28)
+ for j,suffix in enumerate(['','.end']):
+  pic=Image.open(A/f'{key}{suffix}.png').resize((315,210));im.paste(pic,(x+15+j*385,y+110));txt(x+103+j*385,y+318,'起始' if j==0 else '呼气用力',25,False,'#356b60')
+ d.line((x+333,y+216,x+390,y+216),fill='#669d62',width=6);d.polygon([(x+390,y+216),(x+371,y+203),(x+371,y+229)],fill='#669d62')
+txt(68,1820,'先1组、每动作8次；用力2秒，还原3秒。',36,True);txt(68,1874,'轻水瓶250–500克起步；1kg仅经专业允许且适应后用于部分动作。',30);txt(68,1924,'背靠椅背，不憋气、不向下使劲；膝痛时减小幅度。',30)
+d.rounded_rectangle((60,1990,1540,2200),radius=20,fill='#fff2ed',outline='#dfb0a3',width=3);txt(84,2007,'不适即停，不强求完成',42,True,'#8c4334');txt(84,2070,'坠胀、突出感、漏尿或膝痛加重：停止；持续或明显加重请就医。',32,False,'#743f35');txt(84,2125,'出血、剧烈疼痛或无法排尿：及时就医。示意图非个体医疗处方。',30,False,'#743f35')
+im.save(P/'printable/training.png');im.save(P/'printable/training.pdf',resolution=193.5)

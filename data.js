@@ -1,4 +1,4 @@
-window.TRAINING={version:'1.0.0',exercises:[
+window.TRAINING={version:'1.1.0',exercises:[
 {id:'curl',name:'坐姿手臂弯举',equip:'轻水瓶250–500g；获专业允许且适应后才可试1kg',cue:'背靠椅背，上臂贴身，缓慢弯肘。',dose:'8次',seconds:40},
 {id:'external',name:'坐姿肩外旋',equip:'空手或超轻弹力带',cue:'肘贴身体，前臂向外打开，不耸肩。',dose:'8次',seconds:40},
 {id:'lateral_front',name:'坐姿低位侧抬',equip:'空手优先；适应后可用250g水瓶',cue:'双肘微屈，只抬到舒适的低位，不超过肩高。',dose:'8次',seconds:40},
